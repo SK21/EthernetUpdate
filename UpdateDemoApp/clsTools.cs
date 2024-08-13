@@ -40,6 +40,47 @@ namespace UpdateDemoApp
             return Result;
         }
 
+        public void DrawGroupBox(GroupBox box, Graphics g, Color BackColor, Color textColor, Color borderColor)
+        {
+            // useage:
+            // point the Groupbox paint event to this sub:
+            //private void GroupBoxPaint(object sender, PaintEventArgs e)
+            //{
+            //    GroupBox box = sender as GroupBox;
+            //    mf.Tls.DrawGroupBox(box, e.Graphics, this.BackColor, Color.Black, Color.Blue);
+            //}
+
+            if (box != null)
+            {
+                Brush textBrush = new SolidBrush(textColor);
+                Brush borderBrush = new SolidBrush(borderColor);
+                Pen borderPen = new Pen(borderBrush);
+                SizeF strSize = g.MeasureString(box.Text, box.Font);
+                Rectangle rect = new Rectangle(box.ClientRectangle.X,
+                                               box.ClientRectangle.Y + (int)(strSize.Height / 2),
+                                               box.ClientRectangle.Width - 1,
+                                               box.ClientRectangle.Height - (int)(strSize.Height / 2) - 1);
+
+                // Clear text and border
+                g.Clear(BackColor);
+
+                // Draw text
+                g.DrawString(box.Text, box.Font, textBrush, box.Padding.Left, 0);
+
+                // Drawing Border
+                //Left
+                g.DrawLine(borderPen, rect.Location, new Point(rect.X, rect.Y + rect.Height));
+                //Right
+                g.DrawLine(borderPen, new Point(rect.X + rect.Width, rect.Y), new Point(rect.X + rect.Width, rect.Y + rect.Height));
+                //Bottom
+                g.DrawLine(borderPen, new Point(rect.X, rect.Y + rect.Height), new Point(rect.X + rect.Width, rect.Y + rect.Height));
+                //Top1
+                g.DrawLine(borderPen, new Point(rect.X, rect.Y), new Point(rect.X + box.Padding.Left, rect.Y));
+                //Top2
+                g.DrawLine(borderPen, new Point(rect.X + box.Padding.Left + (int)(strSize.Width), rect.Y), new Point(rect.X + rect.Width, rect.Y));
+            }
+        }
+
         public bool GoodCRC(byte[] Data, byte Start = 0)
         {
             bool Result = false;
@@ -124,6 +165,54 @@ namespace UpdateDemoApp
             }
 
             if (LogError) WriteErrorLog(Message);
+        }
+
+        public bool UDP_BroadcastPGN(byte[] Data)
+        {
+            // send UDP
+            // based on AGIO/FormUDP
+            bool Result = false;
+
+            try
+            {
+                IPEndPoint epModuleSet = new IPEndPoint(IPAddress.Parse("255.255.255.255"), 8888);
+
+                //loop thru all interfaces
+                foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (nic.Supports(NetworkInterfaceComponent.IPv4) && nic.OperationalStatus == OperationalStatus.Up)
+                    {
+                        foreach (var info in nic.GetIPProperties().UnicastAddresses)
+                        {
+                            // Only InterNetwork and not loopback which have a subnetmask
+                            if (info.Address.AddressFamily == AddressFamily.InterNetwork &&
+                                !IPAddress.IsLoopback(info.Address) &&
+                                info.IPv4Mask != null)
+                            {
+                                Socket scanSocket;
+                                if (nic.OperationalStatus == OperationalStatus.Up
+                                    && info.IPv4Mask != null)
+                                {
+                                    scanSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                                    scanSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
+                                    scanSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                                    scanSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontRoute, true);
+                                    scanSocket.Bind(new IPEndPoint(info.Address, 9578));
+                                    scanSocket.SendTo(Data, 0, Data.Length, SocketFlags.None, epModuleSet);
+                                    scanSocket.Dispose();
+                                }
+                            }
+                        }
+                    }
+                }
+                Result = true;
+            }
+            catch (Exception ex)
+            {
+                WriteErrorLog("clsTools/UDP_BroadcastPGN: " + ex.Message);
+            }
+
+            return Result;
         }
 
         public void WriteErrorLog(string strErrorText)

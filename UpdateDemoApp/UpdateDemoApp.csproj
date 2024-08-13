@@ -32,6 +32,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>firmware-update-icon.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -60,6 +63,7 @@
       <DependentUpon>frmHelp.cs</DependentUpon>
     </Compile>
     <Compile Include="PGN32800.cs" />
+    <Compile Include="PGN33152.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UDPcomm.cs" />
@@ -114,6 +118,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Update.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Update4.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="firmware-update-icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

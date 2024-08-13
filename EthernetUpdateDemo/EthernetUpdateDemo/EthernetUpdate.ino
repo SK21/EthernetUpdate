@@ -300,4 +300,57 @@ int process_hex_record(char* packetBuffer, int packetSize)
 	return 0;
 }
 
+void ReceiveAGIO()
+{
+	if (Ethernet.linkStatus() == LinkON)
+	{
+		uint16_t len = AGIOcomm.parsePacket();
+		if (len)
+		{
+			byte Data[MaxReadBuffer];
+			AGIOcomm.read(Data, MaxReadBuffer);
+			if ((Data[0] == 128) && (Data[1] == 129) && (Data[2] == 240 || Data[2] == 127))
+			{
+				switch (Data[3])
+				{
+				case 201:
+					// update subnet
+					if ((Data[4] == 5) && (Data[5] == 201) && (Data[6] == 201))
+					{
+						MDL.IP0 = Data[7];
+						MDL.IP1 = Data[8];
+						MDL.IP2 = Data[9];
+
+						SaveData();
+
+						// restart the Teensy
+						SCB_AIRCR = 0x05FA0004;
+					}
+					break;
+				}
+			}
+		}
+	}
+}
+
+void SaveData()
+{
+	Serial.println("Updating stored settings.");
+	EEPROM.put(0, InoID);
+	EEPROM.put(4, InoType);
+	EEPROM.put(110, MDL);
+}
+
+void LoadData()
+{
+	int16_t StoredID;
+	int8_t StoredType;
+	Serial.println("Loading stored settings.");
+	EEPROM.get(0, StoredID);
+	EEPROM.get(4, StoredType);
+	if (StoredID == InoID && StoredType == InoType)
+	{
+		EEPROM.get(110, MDL);
+	}
+}
 

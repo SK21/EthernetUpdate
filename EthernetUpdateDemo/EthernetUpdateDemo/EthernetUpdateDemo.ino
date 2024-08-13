@@ -1,13 +1,33 @@
 #include <NativeEthernet.h>
 #include <NativeEthernetUdp.h>
+#include <EEPROM.h> 
 
 #include "FXUtil.h"		// read_ascii_line(), hex file support
 extern "C" {
 #include "FlashTxx.h"		// TLC/T3x/T4x/TMM flash primitives
 }
 
+# define InoDescription "EthernetUpdateDemo :  13-Aug-2024"
+const uint16_t InoID = 13084;	// change to send defaults to eeprom, ddmmy, no leading 0
+
 #define ModuleID 0
 #define InoType 0
+#define MaxReadBuffer 100	// bytes
+
+struct ModuleConfig
+{
+	uint8_t ID = 0;
+	uint8_t IP0 = 192;
+	uint8_t IP1 = 168;
+	uint8_t IP2 = 1;
+	uint8_t IP3 = 82;
+};
+
+ModuleConfig MDL;
+
+// AGIO
+EthernetUDP AGIOcomm;
+uint16_t ListeningPortAGIO = 8888;		// to listen on
 
 // firmware update
 EthernetUDP UpdateComm;
@@ -46,14 +66,25 @@ hex_info_t hex =
 void setup()
 {
 	Serial.begin(38400);
+	Serial.println();
+	Serial.println("EthernetUpdateDemo");
+	Serial.println();
 
-	// update firmware
-	UpdateComm.begin(UpdateReceivePort);
+	// eeprom
+	LoadData();
+
+	Serial.println("");
+	Serial.print("Module ID: ");
+	Serial.println(MDL.ID);
+	Serial.print("Module Version: ");
+	Serial.println(InoID);
+	Serial.println("");
 
 	// ethernet 
 	Serial.println("Starting Ethernet ...");
-	IPAddress LocalIP(192, 168, 5, 103);
-	static uint8_t LocalMac[] = { 0x0A,0x0B,0x42,0x0C,0x0D,0xFE };
+	MDL.IP3 = MDL.ID + 82;
+	IPAddress LocalIP(MDL.IP0, MDL.IP1, MDL.IP2, MDL.IP3);
+	static uint8_t LocalMac[] = { 0x0A,0x0B,0x42,0x0C,0x0D,MDL.IP3 };
 
 	Ethernet.begin(LocalMac, 0);
 	Ethernet.setLocalIP(LocalIP);
@@ -69,15 +100,23 @@ void setup()
 	}
 	Serial.print("IP Address: ");
 	Serial.println(Ethernet.localIP());
+	DestinationIP = IPAddress(MDL.IP0, MDL.IP1, MDL.IP2, 255);	// update from saved data
 	Serial.println("");
 
+	// AGIO
+	AGIOcomm.begin(ListeningPortAGIO);
+
+	// update firmware
+	UpdateComm.begin(UpdateReceivePort);
+
+	Serial.println("Test 2");
 	Serial.println("Finished setup.");
 }
 
 void loop()
 {
 	ReceiveUpdate();
-
+	ReceiveAGIO();
 }
 
 bool GoodCRC(byte Data[], byte Length)

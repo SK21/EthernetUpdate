@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -188,6 +189,8 @@ namespace UpdateDemoApp
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
                     tbHexfile.Text = openFileDialog.FileName;
+                    tbHexfile.Select(tbHexfile.Text.Length, 0);
+                    tbHexfile.ScrollToCaret();
                 }
             }
         }
@@ -216,6 +219,27 @@ namespace UpdateDemoApp
             string Message = "Use the base firmware included in the app.";
 
             Tls.ShowHelp(Message, "Use default");
+            hlpevent.Handled = true;
+        }
+
+        private void btnSendSubnet_Click(object sender, EventArgs e)
+        {
+            PGN33152 SetSubnet = new PGN33152(this);
+            if (SetSubnet.Send(Subnet))
+            {
+                Tls.ShowHelp("New Subnet address sent.", "Subnet", 10000);
+            }
+            else
+            {
+                Tls.ShowHelp("New Subnet address not sent.", "Subnet", 10000);
+            }
+        }
+
+        private void btnSendSubnet_HelpRequested(object sender, HelpEventArgs hlpevent)
+        {
+            string Message = "Change module subnet.";
+
+            Tls.ShowHelp(Message, "Subnet");
             hlpevent.Handled = true;
         }
 
@@ -273,7 +297,7 @@ namespace UpdateDemoApp
                 default:
                     // autosteer
                     //tbHexfile.Text = "Default file version date: " + Tls.TeensyAutoSteerVersion();
-                    this.Text = "Teensy Firmware Upload";
+                    this.Text = "Teensy Firmware Update";
                     IDname = "TeensySteerID";
                     break;
             }
@@ -287,6 +311,12 @@ namespace UpdateDemoApp
             {
                 Tls.ShowHelp("UDPupdate failed to start.", "", 3000, true, true);
             }
+        }
+
+        private void groupBox1_Paint(object sender, PaintEventArgs e)
+        {
+            GroupBox box = sender as GroupBox;
+            Tls.DrawGroupBox(box, e.Graphics, this.BackColor, Color.Black, Color.Blue);
         }
 
         private void LoadCombo()

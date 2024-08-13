@@ -109,7 +109,7 @@ void setup()
 	// update firmware
 	UpdateComm.begin(UpdateReceivePort);
 
-	Serial.println("Test 2");
+	Serial.println("Test 25");
 	Serial.println("Finished setup.");
 }
 

@@ -65,10 +65,12 @@ namespace UpdateDemoApp
             int lines = data[2] | (data[3] << 8) | (data[4] << 16) | (data[5] << 24);
             if (TotalLines == lines)
             {
+                Tls.ShowHelp("Upload Success! Wait about 1 minute for the new firmware to be installed. The subnet may need to be updated after install.");
                 UDPupdate.SendUDPMessage(new byte[] { 0x3a, 0x00, 0x00, 0x00, 0x06, 0xFA });
             }
             else
             {
+                Tls.ShowHelp("Upload did not succeed");
                 UDPupdate.SendUDPMessage(new byte[] { 0x3a, 0x00, 0x00, 0x00, 0x07, 0xF9 });
             }
         }
@@ -143,7 +145,6 @@ namespace UpdateDemoApp
                             }
                             TotalLines = idx;
                         }
-                        Tls.ShowHelp("Wait about 1 minute for the new firmware to be installed.");
                     }
                 }
             }
@@ -311,6 +312,7 @@ namespace UpdateDemoApp
             {
                 Tls.ShowHelp("UDPupdate failed to start.", "", 3000, true, true);
             }
+            btnDefault_Click(sender, e);
         }
 
         private void groupBox1_Paint(object sender, PaintEventArgs e)

@@ -1,4 +1,6 @@
 
+// based on https://github.com/joepasquariello/FlasherX
+
 uint16_t PacketLength;
 uint8_t ReceivedData[500];
 int DisplayCount = 0;

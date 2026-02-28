@@ -1,0 +1,1 @@
+Update Teensy 4.1 over ethernet. Use the example Teensy code to test. EthernetUpdate.ino needs to be included in the Teensy firmware and a check from the main loop. UpdateDemoApp will update the teensy with either the built in test code or any other Teensy hex file chosen.
